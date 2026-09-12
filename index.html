@@ -38,7 +38,7 @@
       transition: background-color 0.2s, color 0.2s;
     }
 
-    /* 전체화면 모드 제어 */
+    /* Fullscreen Mode */
     body.is-fullscreen header,
     body.is-fullscreen .controls,
     body.is-fullscreen .meta-bar {
@@ -74,7 +74,7 @@
       display: block;
     }
 
-    /* 상단 네비게이션 헤더 */
+    /* Header */
     header {
       display: flex;
       justify-content: space-between;
@@ -86,13 +86,6 @@
     .brand-title {
       font-weight: 700;
       letter-spacing: 0.1em;
-    }
-
-    /* 폰트 선택 드롭다운 */
-    .font-select-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
 
     select#font-select {
@@ -113,7 +106,7 @@
       color: var(--text);
     }
 
-    /* 조판 컨트롤 패널 */
+    /* Controls */
     .controls {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -187,7 +180,7 @@
       color: var(--bg);
     }
 
-    /* 텍스트 편집 영역 */
+    /* Tester Stage */
     .tester-container {
       position: relative;
       min-height: calc(100vh - 95px);
@@ -209,7 +202,7 @@
       text-transform: none;
     }
 
-    /* 하단 메타 바 */
+    /* Meta Bar */
     .meta-bar {
       margin-top: 40px;
       padding-top: 12px;
@@ -228,7 +221,9 @@
   <header>
     <div class="brand-title">TYPE TESTER</div>
     <div class="font-select-wrapper">
-      <select id="font-select"></select>
+      <select id="font-select">
+        <option>Scanning fonts...</option>
+      </select>
     </div>
   </header>
 
@@ -290,14 +285,9 @@
   </main>
 
   <script>
-    // -------------------------------------------------------------
-    // fonts/ 폴더에 업로드한 폰트 파일 목록을 아래 배열에 적어주세요.
-    // -------------------------------------------------------------
-    const FONT_LIST = [
-      'my-font.woff2',
-      'my-font-bold.woff2',
-      'custom-serif.otf'
-    ];
+    // GitHub 사용자명과 저장소명
+    const GITHUB_USER = 'b-jun-kim';
+    const GITHUB_REPO = 'typetester';
 
     const preview = document.getElementById('preview');
     const fontSelect = document.getElementById('font-select');
@@ -317,10 +307,10 @@
     const btnFullscreen = document.getElementById('btn-fullscreen');
     const btnExitFullscreen = document.getElementById('btn-exit-fullscreen');
 
-    // 캐시 저장소: 이미 로드된 FontFace 인스턴스를 재사용
     const loadedFontMap = new Map();
+    let autoFoundFonts = [];
 
-    // 폰트 동적 로드 및 적용 함수
+    // 폰트 파일 동적 로드
     async function applyFont(fileName) {
       fontIndicator.textContent = `Loading: fonts/${fileName}...`;
       const fontUrl = `./fonts/${fileName}`;
@@ -339,38 +329,57 @@
         fontIndicator.textContent = `Loaded Font: fonts/${fileName}`;
       } catch (err) {
         console.error('폰트 로드 실패:', err);
-        fontIndicator.textContent = `Error: fonts/${fileName} (Check file path)`;
+        fontIndicator.textContent = `Error: fonts/${fileName}`;
       }
     }
 
-    // 드롭다운 옵션 자동 생성 및 초기 서체 로드
-    function initFontSelector() {
-      fontSelect.innerHTML = '';
+    // GitHub API를 통해 fonts 폴더를 자동 스캔
+    async function autoFetchFonts() {
+      const apiUrl = `https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/contents/fonts`;
 
-      if (FONT_LIST.length === 0) {
-        const opt = document.createElement('option');
-        opt.textContent = 'No Fonts Listed';
-        fontSelect.appendChild(opt);
-        fontIndicator.textContent = 'No fonts defined in FONT_LIST';
-        return;
+      try {
+        const res = await fetch(apiUrl);
+        if (!res.ok) throw new Error('API 응답 실패');
+
+        const files = await res.json();
+        // 폰트 확장자만 필터링
+        const fontExtensions = ['.otf', '.ttf', '.woff', '.woff2'];
+        autoFoundFonts = files
+          .filter(file => file.type === 'file' && fontExtensions.some(ext => file.name.toLowerCase().endsWith(ext)))
+          .map(file => file.name);
+
+        fontSelect.innerHTML = '';
+
+        if (autoFoundFonts.length === 0) {
+          const opt = document.createElement('option');
+          opt.textContent = 'No fonts found in /fonts';
+          fontSelect.appendChild(opt);
+          fontIndicator.textContent = 'No font files found in fonts/ directory';
+          return;
+        }
+
+        autoFoundFonts.forEach((fileName) => {
+          const opt = document.createElement('option');
+          opt.value = fileName;
+          opt.textContent = fileName;
+          fontSelect.appendChild(opt);
+        });
+
+        // 첫 번째 발견된 폰트 자동 적용
+        applyFont(autoFoundFonts[0]);
+
+      } catch (err) {
+        console.warn('GitHub API 탐색 실패 (로컬 또는 Rate Limit). 폴백 목록을 확인하세요.', err);
+        fontSelect.innerHTML = '<option value="Reykjavik-Regular.otf">Reykjavik-Regular.otf</option>';
+        applyFont('Reykjavik-Regular.otf');
       }
-
-      FONT_LIST.forEach((fileName) => {
-        const opt = document.createElement('option');
-        opt.value = fileName;
-        opt.textContent = fileName;
-        fontSelect.appendChild(opt);
-      });
-
-      // 첫 번째 서체 기본 적용
-      applyFont(FONT_LIST[0]);
     }
 
     fontSelect.addEventListener('change', (e) => {
       applyFont(e.target.value);
     });
 
-    // 슬라이더 및 조판 제어 바인딩
+    // 슬라이더 및 제어
     inputSize.addEventListener('input', (e) => {
       const val = e.target.value;
       preview.style.fontSize = `${val}px`;
@@ -401,7 +410,6 @@
       document.body.classList.toggle('theme-invert');
     });
 
-    // 전체화면 모드
     btnFullscreen.addEventListener('click', async () => {
       try {
         if (!document.fullscreenElement) {
@@ -426,7 +434,6 @@
       }
     });
 
-    // 리셋 버튼
     btnReset.addEventListener('click', () => {
       inputSize.value = 72;
       inputLeading.value = 1.1;
@@ -441,14 +448,14 @@
       alignBtns.forEach(b => b.classList.remove('active'));
       document.querySelector('.btn-align[data-align="left"]').classList.add('active');
 
-      if (FONT_LIST.length > 0) {
-        fontSelect.value = FONT_LIST[0];
-        applyFont(FONT_LIST[0]);
+      if (autoFoundFonts.length > 0) {
+        fontSelect.value = autoFoundFonts[0];
+        applyFont(autoFoundFonts[0]);
       }
     });
 
-    // 페이지 구동 시작
-    initFontSelector();
+    // 자동 검색 실행
+    autoFetchFonts();
   </script>
 </body>
 </html>
