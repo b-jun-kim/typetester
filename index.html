@@ -126,8 +126,6 @@
     }
 
     .control-label {
-      display: flex;
-      justify-content: space-between;
       color: var(--accent);
     }
 
@@ -182,7 +180,6 @@
       color: var(--bg);
     }
 
-    /* Case 버튼 텍스트가 대문자로 강제 변환되지 않도록 격리 */
     button.btn-case {
       text-transform: none !important;
       font-weight: 500;
@@ -228,7 +225,7 @@
       line-height: 1.1;
       letter-spacing: 0em;
       text-align: left;
-      text-transform: uppercase; /* 기본 대문자 시작 */
+      text-transform: uppercase;
     }
 
     /* 하단 메타 바 */
@@ -258,33 +255,22 @@
 
   <div class="controls">
     <div class="control-item">
-      <div class="control-label">
-        <span>Size</span>
-        <span id="val-size">72px</span>
-      </div>
+      <div class="control-label">Size</div>
       <input type="range" id="input-size" min="12" max="240" value="72">
     </div>
 
     <div class="control-item">
-      <div class="control-label">
-        <span>Leading</span>
-        <span id="val-leading">1.1</span>
-      </div>
+      <div class="control-label">Leading</div>
       <input type="range" id="input-leading" min="0.7" max="2.5" step="0.05" value="1.1">
     </div>
 
     <div class="control-item">
-      <div class="control-label">
-        <span>Tracking</span>
-        <span id="val-tracking">0.00em</span>
-      </div>
+      <div class="control-label">Tracking</div>
       <input type="range" id="input-tracking" min="-0.15" max="0.5" step="0.01" value="0">
     </div>
 
     <div class="control-item">
-      <div class="control-label">
-        <span>Case</span>
-      </div>
+      <div class="control-label">Case</div>
       <div class="btn-group">
         <button type="button" class="btn-case active" data-case="uppercase">AA</button>
         <button type="button" class="btn-case" data-case="lowercase">aa</button>
@@ -293,9 +279,7 @@
     </div>
 
     <div class="control-item">
-      <div class="control-label">
-        <span>Alignment</span>
-      </div>
+      <div class="control-label">Alignment</div>
       <div class="btn-group">
         <button type="button" class="btn-align active" data-align="left">Left</button>
         <button type="button" class="btn-align" data-align="center">Center</button>
@@ -304,9 +288,7 @@
     </div>
 
     <div class="control-item">
-      <div class="control-label">
-        <span>View</span>
-      </div>
+      <div class="control-label">View</div>
       <div class="btn-group">
         <button type="button" class="btn-theme active" id="btn-theme-white">White</button>
         <button type="button" class="btn-theme" id="btn-theme-black">Black</button>
@@ -346,10 +328,6 @@
     const inputSize = document.getElementById('input-size');
     const inputLeading = document.getElementById('input-leading');
     const inputTracking = document.getElementById('input-tracking');
-
-    const valSize = document.getElementById('val-size');
-    const valLeading = document.getElementById('val-leading');
-    const valTracking = document.getElementById('val-tracking');
 
     const caseBtns = document.querySelectorAll('.btn-case');
     const alignBtns = document.querySelectorAll('.btn-align');
@@ -430,25 +408,19 @@
       applyFont(e.target.value);
     });
 
+    // 슬라이더 조작 시 본문 스타일만 즉각 업데이트
     inputSize.addEventListener('input', (e) => {
-      const val = e.target.value;
-      preview.style.fontSize = `${val}px`;
-      valSize.textContent = `${val}px`;
+      preview.style.fontSize = `${e.target.value}px`;
     });
 
     inputLeading.addEventListener('input', (e) => {
-      const val = e.target.value;
-      preview.style.lineHeight = val;
-      valLeading.textContent = val;
+      preview.style.lineHeight = e.target.value;
     });
 
     inputTracking.addEventListener('input', (e) => {
-      const val = e.target.value;
-      preview.style.letterSpacing = `${val}em`;
-      valTracking.textContent = `${val}em`;
+      preview.style.letterSpacing = `${e.target.value}em`;
     });
 
-    // Case 전환 핸들러
     caseBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         caseBtns.forEach(b => b.classList.remove('active'));
