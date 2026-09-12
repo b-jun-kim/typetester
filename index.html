@@ -1,429 +1,454 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Type Tester</title>
-    <style>
-      /* [방법 A] 저장소 내 fonts 폴더의 기본 웹폰트 등록 */
-      @font-face {
-        font-family: "DefaultRepoFont";
-        src:
-          url("./fonts/my-font.woff2") format("woff2"),
-          url("./fonts/my-font.otf") format("opentype"),
-          url("./fonts/my-font.ttf") format("truetype");
-        font-weight: normal;
-        font-style: normal;
-        font-display: swap;
-      }
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Type Tester</title>
+  <style>
+    :root {
+      --bg: #ffffff;
+      --text: #111111;
+      --border: #111111;
+      --panel-bg: #fafafa;
+      --accent: #555555;
+    }
 
-      :root {
-        --bg: #ffffff;
-        --text: #111111;
-        --border: #111111;
-        --panel-bg: #fafafa;
-        --accent: #555555;
-      }
+    body.theme-invert {
+      --bg: #111111;
+      --text: #ffffff;
+      --border: #ffffff;
+      --panel-bg: #1c1c1c;
+      --accent: #aaaaaa;
+    }
 
-      body.theme-invert {
-        --bg: #111111;
-        --text: #ffffff;
-        --border: #ffffff;
-        --panel-bg: #1c1c1c;
-        --accent: #aaaaaa;
-      }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-      * {
-        box-sizing: border-box;
-        margin: 0;
-        padding: 0;
-      }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      font-size: 11px;
+      line-height: 1.4;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: background-color 0.2s, color 0.2s;
+    }
 
-      body {
-        background-color: var(--bg);
-        color: var(--text);
-        font-family:
-          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
-        font-size: 11px;
-        line-height: 1.4;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        transition:
-          background-color 0.2s,
-          color 0.2s;
-      }
+    /* 전체화면 모드 제어 */
+    body.is-fullscreen header,
+    body.is-fullscreen .controls,
+    body.is-fullscreen .meta-bar {
+      display: none !important;
+    }
 
-      /* 전체화면 모드 스타일 */
-      body.is-fullscreen header,
-      body.is-fullscreen .controls,
-      body.is-fullscreen .meta-bar {
-        display: none !important;
-      }
+    body.is-fullscreen .tester-container {
+      min-height: 100vh;
+      height: 100vh;
+      padding: 60px;
+    }
 
-      body.is-fullscreen .tester-container {
-        min-height: 100vh;
-        height: 100vh;
-        padding: 60px;
-      }
+    #btn-exit-fullscreen {
+      display: none;
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      z-index: 9999;
+      background: var(--bg);
+      color: var(--text);
+      border: 1px solid var(--border);
+      opacity: 0.3;
+      transition: opacity 0.2s;
+    }
 
-      #btn-exit-fullscreen {
-        display: none;
-        position: fixed;
-        top: 24px;
-        right: 24px;
-        z-index: 9999;
-        background: var(--bg);
-        color: var(--text);
-        border: 1px solid var(--border);
-        opacity: 0.3;
-        transition: opacity 0.2s;
-      }
+    #btn-exit-fullscreen:hover {
+      opacity: 1;
+      background: var(--text);
+      color: var(--bg);
+    }
 
-      #btn-exit-fullscreen:hover {
-        opacity: 1;
-        background: var(--text);
-        color: var(--bg);
-      }
+    body.is-fullscreen #btn-exit-fullscreen {
+      display: block;
+    }
 
-      body.is-fullscreen #btn-exit-fullscreen {
-        display: block;
-      }
+    /* 상단 네비게이션 헤더 */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+    }
 
-      /* 상단 네비게이션 헤더 */
-      header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 16px;
-        border-bottom: 1px solid var(--border);
-      }
+    .brand-title {
+      font-weight: 700;
+      letter-spacing: 0.1em;
+    }
 
-      .brand-title {
-        font-weight: 700;
-        letter-spacing: 0.1em;
-      }
+    /* 폰트 선택 드롭다운 */
+    .font-select-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
 
-      /* 조판 컨트롤 패널 */
-      .controls {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        border-bottom: 1px solid var(--border);
-        background-color: var(--panel-bg);
-      }
+    select#font-select {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 4px 10px;
+      font-size: 10px;
+      font-family: inherit;
+      text-transform: uppercase;
+      outline: none;
+      cursor: pointer;
+      border-radius: 0;
+    }
 
-      .control-item {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        padding: 10px 16px;
-        border-right: 1px solid var(--border);
-      }
+    select#font-select option {
+      background-color: var(--bg);
+      color: var(--text);
+    }
 
-      .control-item:last-child {
-        border-right: none;
-      }
+    /* 조판 컨트롤 패널 */
+    .controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      border-bottom: 1px solid var(--border);
+      background-color: var(--panel-bg);
+    }
 
-      .control-label {
-        display: flex;
-        justify-content: space-between;
-        color: var(--accent);
-      }
+    .control-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 10px 16px;
+      border-right: 1px solid var(--border);
+    }
 
-      input[type="range"] {
-        -webkit-appearance: none;
-        width: 100%;
-        height: 2px;
-        background: var(--border);
-        outline: none;
-        cursor: pointer;
-      }
+    .control-item:last-child {
+      border-right: none;
+    }
 
-      input[type="range"]::-webkit-slider-thumb {
-        -webkit-appearance: none;
-        width: 10px;
-        height: 10px;
-        background: var(--text);
-        border-radius: 0;
-        cursor: pointer;
-      }
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      color: var(--accent);
+    }
 
-      .btn-group {
-        display: flex;
-        gap: 4px;
-        flex-wrap: wrap;
-      }
+    input[type="range"] {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 2px;
+      background: var(--border);
+      outline: none;
+      cursor: pointer;
+    }
 
-      button,
-      label.file-upload-btn {
-        background: transparent;
-        border: 1px solid var(--border);
-        color: var(--text);
-        padding: 4px 8px;
-        font-size: 10px;
-        font-family: inherit;
-        cursor: pointer;
-        text-transform: uppercase;
-        text-align: center;
-        transition: all 0.15s ease;
-      }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 10px;
+      height: 10px;
+      background: var(--text);
+      border-radius: 0;
+      cursor: pointer;
+    }
 
-      button:hover,
-      label.file-upload-btn:hover {
-        background: var(--text);
-        color: var(--bg);
-      }
+    .btn-group {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+    }
 
-      button.active {
-        background: var(--text);
-        color: var(--bg);
-      }
+    button {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 4px 8px;
+      font-size: 10px;
+      font-family: inherit;
+      cursor: pointer;
+      text-transform: uppercase;
+      text-align: center;
+      transition: all 0.15s ease;
+      border-radius: 0;
+    }
 
-      input[type="file"] {
-        display: none;
-      }
+    button:hover {
+      background: var(--text);
+      color: var(--bg);
+    }
 
-      /* 텍스트 편집 영역 */
-      .tester-container {
-        position: relative;
-        min-height: calc(100vh - 95px);
-        padding: 40px;
-        display: flex;
-        flex-direction: column;
-      }
+    button.active {
+      background: var(--text);
+      color: var(--bg);
+    }
 
-      #preview {
-        flex: 1;
-        width: 100%;
-        outline: none;
-        white-space: pre-wrap;
-        word-break: break-word;
-        font-family: "DefaultRepoFont", sans-serif; /* 기본 등록 폰트 적용 */
-        font-size: 72px;
-        line-height: 1.1;
-        letter-spacing: 0em;
-        text-align: left;
-        text-transform: none;
-      }
+    /* 텍스트 편집 영역 */
+    .tester-container {
+      position: relative;
+      min-height: calc(100vh - 95px);
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+    }
 
-      /* 하단 메타 정보 바 */
-      .meta-bar {
-        margin-top: 40px;
-        padding-top: 12px;
-        border-top: 1px solid var(--border);
-        display: flex;
-        justify-content: space-between;
-        color: var(--accent);
-        font-size: 10px;
-      }
-    </style>
-  </head>
-  <body>
-    <button type="button" id="btn-exit-fullscreen">
-      Exit Fullscreen (ESC)
-    </button>
+    #preview {
+      flex: 1;
+      width: 100%;
+      outline: none;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 72px;
+      line-height: 1.1;
+      letter-spacing: 0em;
+      text-align: left;
+      text-transform: none;
+    }
 
-    <header>
-      <div class="brand-title">TYPE TESTER</div>
-      <div>
-        <label class="file-upload-btn">
-          Upload Other Font
-          <input type="file" id="fontInput" accept=".ttf,.otf,.woff,.woff2" />
-        </label>
+    /* 하단 메타 바 */
+    .meta-bar {
+      margin-top: 40px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      color: var(--accent);
+      font-size: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <button type="button" id="btn-exit-fullscreen">Exit Fullscreen (ESC)</button>
+
+  <header>
+    <div class="brand-title">TYPE TESTER</div>
+    <div class="font-select-wrapper">
+      <select id="font-select"></select>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="control-item">
+      <div class="control-label">
+        <span>Size</span>
+        <span id="val-size">72px</span>
       </div>
-    </header>
+      <input type="range" id="input-size" min="12" max="240" value="72">
+    </div>
 
-    <div class="controls">
-      <div class="control-item">
-        <div class="control-label">
-          <span>Size</span>
-          <span id="val-size">72px</span>
-        </div>
-        <input type="range" id="input-size" min="12" max="240" value="72" />
+    <div class="control-item">
+      <div class="control-label">
+        <span>Leading</span>
+        <span id="val-leading">1.1</span>
       </div>
+      <input type="range" id="input-leading" min="0.7" max="2.5" step="0.05" value="1.1">
+    </div>
 
-      <div class="control-item">
-        <div class="control-label">
-          <span>Leading</span>
-          <span id="val-leading">1.1</span>
-        </div>
-        <input
-          type="range"
-          id="input-leading"
-          min="0.7"
-          max="2.5"
-          step="0.05"
-          value="1.1"
-        />
+    <div class="control-item">
+      <div class="control-label">
+        <span>Tracking</span>
+        <span id="val-tracking">0.00em</span>
       </div>
+      <input type="range" id="input-tracking" min="-0.15" max="0.5" step="0.01" value="0">
+    </div>
 
-      <div class="control-item">
-        <div class="control-label">
-          <span>Tracking</span>
-          <span id="val-tracking">0.00em</span>
-        </div>
-        <input
-          type="range"
-          id="input-tracking"
-          min="-0.15"
-          max="0.5"
-          step="0.01"
-          value="0"
-        />
+    <div class="control-item">
+      <div class="control-label">
+        <span>Alignment</span>
       </div>
-
-      <div class="control-item">
-        <div class="control-label">
-          <span>Alignment</span>
-        </div>
-        <div class="btn-group">
-          <button type="button" class="btn-align active" data-align="left">
-            Left
-          </button>
-          <button type="button" class="btn-align" data-align="center">
-            Center
-          </button>
-          <button type="button" class="btn-align" data-align="right">
-            Right
-          </button>
-        </div>
-      </div>
-
-      <div class="control-item">
-        <div class="control-label">
-          <span>View</span>
-        </div>
-        <div class="btn-group">
-          <button type="button" id="btn-invert">Invert</button>
-          <button type="button" id="btn-fullscreen">Fullscreen</button>
-          <button type="button" id="btn-reset">Reset</button>
-        </div>
+      <div class="btn-group">
+        <button type="button" class="btn-align active" data-align="left">Left</button>
+        <button type="button" class="btn-align" data-align="center">Center</button>
+        <button type="button" class="btn-align" data-align="right">Right</button>
       </div>
     </div>
 
-    <main class="tester-container">
-      <div id="preview" contenteditable="true" spellcheck="false">
-        The quick brown fox jumps over the lazy dog. 0123456789 — !@#$%^&*()
+    <div class="control-item">
+      <div class="control-label">
+        <span>View</span>
       </div>
-      <div class="meta-bar">
-        <span id="font-name-indicator"
-          >Loaded Font: fonts/my-font (Repo Default)</span
-        >
-        <span>UTF-8 / Dynamic Preview</span>
+      <div class="btn-group">
+        <button type="button" id="btn-invert">Invert</button>
+        <button type="button" id="btn-fullscreen">Fullscreen</button>
+        <button type="button" id="btn-reset">Reset</button>
       </div>
-    </main>
+    </div>
+  </div>
 
-    <script>
-      const preview = document.getElementById("preview");
-      const fontInput = document.getElementById("fontInput");
-      const fontIndicator = document.getElementById("font-name-indicator");
+  <main class="tester-container">
+    <div id="preview" contenteditable="true" spellcheck="false">The quick brown fox jumps over the lazy dog.
+0123456789 — !@#$%^&*()</div>
+    <div class="meta-bar">
+      <span id="font-name-indicator">Loaded Font: Initializing...</span>
+      <span>UTF-8 / Dynamic Preview</span>
+    </div>
+  </main>
 
-      const inputSize = document.getElementById("input-size");
-      const inputLeading = document.getElementById("input-leading");
-      const inputTracking = document.getElementById("input-tracking");
+  <script>
+    // -------------------------------------------------------------
+    // fonts/ 폴더에 업로드한 폰트 파일 목록을 아래 배열에 적어주세요.
+    // -------------------------------------------------------------
+    const FONT_LIST = [
+      'my-font.woff2',
+      'my-font-bold.woff2',
+      'custom-serif.otf'
+    ];
 
-      const valSize = document.getElementById("val-size");
-      const valLeading = document.getElementById("val-leading");
-      const valTracking = document.getElementById("val-tracking");
+    const preview = document.getElementById('preview');
+    const fontSelect = document.getElementById('font-select');
+    const fontIndicator = document.getElementById('font-name-indicator');
 
-      const alignBtns = document.querySelectorAll(".btn-align");
-      const btnInvert = document.getElementById("btn-invert");
-      const btnReset = document.getElementById("btn-reset");
-      const btnFullscreen = document.getElementById("btn-fullscreen");
-      const btnExitFullscreen = document.getElementById("btn-exit-fullscreen");
+    const inputSize = document.getElementById('input-size');
+    const inputLeading = document.getElementById('input-leading');
+    const inputTracking = document.getElementById('input-tracking');
 
-      // 사용자가 로컬 파일을 직접 선택해 테스트할 경우
-      fontInput.addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+    const valSize = document.getElementById('val-size');
+    const valLeading = document.getElementById('val-leading');
+    const valTracking = document.getElementById('val-tracking');
 
-        const familyName = `CustomFont_${Date.now()}`;
-        try {
-          const buffer = await file.arrayBuffer();
-          const font = new FontFace(familyName, buffer);
+    const alignBtns = document.querySelectorAll('.btn-align');
+    const btnInvert = document.getElementById('btn-invert');
+    const btnReset = document.getElementById('btn-reset');
+    const btnFullscreen = document.getElementById('btn-fullscreen');
+    const btnExitFullscreen = document.getElementById('btn-exit-fullscreen');
+
+    // 캐시 저장소: 이미 로드된 FontFace 인스턴스를 재사용
+    const loadedFontMap = new Map();
+
+    // 폰트 동적 로드 및 적용 함수
+    async function applyFont(fileName) {
+      fontIndicator.textContent = `Loading: fonts/${fileName}...`;
+      const fontUrl = `./fonts/${fileName}`;
+      const familyName = `RepoFont_${fileName.replace(/[^a-zA-Z0-9]/g, '_')}`;
+
+      try {
+        if (!loadedFontMap.has(fileName)) {
+          const font = new FontFace(familyName, `url("${fontUrl}")`);
           await font.load();
           document.fonts.add(font);
-
-          preview.style.fontFamily = `"${familyName}", sans-serif`;
-          fontIndicator.textContent = `Loaded Font: ${file.name} (Uploaded)`;
-        } catch (err) {
-          alert("폰트 파일을 로드하는 데 실패했습니다.");
+          loadedFontMap.set(fileName, familyName);
         }
+
+        const activeFamily = loadedFontMap.get(fileName);
+        preview.style.fontFamily = `"${activeFamily}", sans-serif`;
+        fontIndicator.textContent = `Loaded Font: fonts/${fileName}`;
+      } catch (err) {
+        console.error('폰트 로드 실패:', err);
+        fontIndicator.textContent = `Error: fonts/${fileName} (Check file path)`;
+      }
+    }
+
+    // 드롭다운 옵션 자동 생성 및 초기 서체 로드
+    function initFontSelector() {
+      fontSelect.innerHTML = '';
+
+      if (FONT_LIST.length === 0) {
+        const opt = document.createElement('option');
+        opt.textContent = 'No Fonts Listed';
+        fontSelect.appendChild(opt);
+        fontIndicator.textContent = 'No fonts defined in FONT_LIST';
+        return;
+      }
+
+      FONT_LIST.forEach((fileName) => {
+        const opt = document.createElement('option');
+        opt.value = fileName;
+        opt.textContent = fileName;
+        fontSelect.appendChild(opt);
       });
 
-      // 슬라이더 및 정렬 제어
-      inputSize.addEventListener("input", (e) => {
-        const val = e.target.value;
-        preview.style.fontSize = `${val}px`;
-        valSize.textContent = `${val}px`;
-      });
+      // 첫 번째 서체 기본 적용
+      applyFont(FONT_LIST[0]);
+    }
 
-      inputLeading.addEventListener("input", (e) => {
-        const val = e.target.value;
-        preview.style.lineHeight = val;
-        valLeading.textContent = val;
-      });
+    fontSelect.addEventListener('change', (e) => {
+      applyFont(e.target.value);
+    });
 
-      inputTracking.addEventListener("input", (e) => {
-        const val = e.target.value;
-        preview.style.letterSpacing = `${val}em`;
-        valTracking.textContent = `${val}em`;
-      });
+    // 슬라이더 및 조판 제어 바인딩
+    inputSize.addEventListener('input', (e) => {
+      const val = e.target.value;
+      preview.style.fontSize = `${val}px`;
+      valSize.textContent = `${val}px`;
+    });
 
-      alignBtns.forEach((btn) => {
-        btn.addEventListener("click", () => {
-          alignBtns.forEach((b) => b.classList.remove("active"));
-          btn.classList.add("active");
-          preview.style.textAlign = btn.dataset.align;
-        });
-      });
+    inputLeading.addEventListener('input', (e) => {
+      const val = e.target.value;
+      preview.style.lineHeight = val;
+      valLeading.textContent = val;
+    });
 
-      btnInvert.addEventListener("click", () => {
-        document.body.classList.toggle("theme-invert");
-      });
+    inputTracking.addEventListener('input', (e) => {
+      const val = e.target.value;
+      preview.style.letterSpacing = `${val}em`;
+      valTracking.textContent = `${val}em`;
+    });
 
-      btnFullscreen.addEventListener("click", async () => {
-        try {
-          if (!document.fullscreenElement) {
-            await document.documentElement.requestFullscreen();
-          }
-          document.body.classList.add("is-fullscreen");
-        } catch (err) {
-          document.body.classList.add("is-fullscreen");
-        }
+    alignBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        alignBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        preview.style.textAlign = btn.dataset.align;
       });
+    });
 
-      btnExitFullscreen.addEventListener("click", async () => {
-        if (document.fullscreenElement) {
-          await document.exitFullscreen();
-        }
-        document.body.classList.remove("is-fullscreen");
-      });
+    btnInvert.addEventListener('click', () => {
+      document.body.classList.toggle('theme-invert');
+    });
 
-      document.addEventListener("fullscreenchange", () => {
+    // 전체화면 모드
+    btnFullscreen.addEventListener('click', async () => {
+      try {
         if (!document.fullscreenElement) {
-          document.body.classList.remove("is-fullscreen");
+          await document.documentElement.requestFullscreen();
         }
-      });
+        document.body.classList.add('is-fullscreen');
+      } catch (err) {
+        document.body.classList.add('is-fullscreen');
+      }
+    });
 
-      // 초기화 버튼 클릭 시 (기본 저장소 폰트로 복귀)
-      btnReset.addEventListener("click", () => {
-        inputSize.value = 72;
-        inputLeading.value = 1.1;
-        inputTracking.value = 0;
-        preview.style.fontSize = "72px";
-        preview.style.lineHeight = "1.1";
-        preview.style.letterSpacing = "0em";
-        preview.style.textAlign = "left";
-        preview.style.fontFamily = "'DefaultRepoFont', sans-serif";
-        valSize.textContent = "72px";
-        valLeading.textContent = "1.1";
-        valTracking.textContent = "0.00em";
-        fontIndicator.textContent = "Loaded Font: fonts/my-font (Repo Default)";
-        alignBtns.forEach((b) => b.classList.remove("active"));
-        document
-          .querySelector('.btn-align[data-align="left"]')
-          .classList.add("active");
-      });
-    </script>
-  </body>
+    btnExitFullscreen.addEventListener('click', async () => {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+      document.body.classList.remove('is-fullscreen');
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        document.body.classList.remove('is-fullscreen');
+      }
+    });
+
+    // 리셋 버튼
+    btnReset.addEventListener('click', () => {
+      inputSize.value = 72;
+      inputLeading.value = 1.1;
+      inputTracking.value = 0;
+      preview.style.fontSize = '72px';
+      preview.style.lineHeight = '1.1';
+      preview.style.letterSpacing = '0em';
+      preview.style.textAlign = 'left';
+      valSize.textContent = '72px';
+      valLeading.textContent = '1.1';
+      valTracking.textContent = '0.00em';
+      alignBtns.forEach(b => b.classList.remove('active'));
+      document.querySelector('.btn-align[data-align="left"]').classList.add('active');
+
+      if (FONT_LIST.length > 0) {
+        fontSelect.value = FONT_LIST[0];
+        applyFont(FONT_LIST[0]);
+      }
+    });
+
+    // 페이지 구동 시작
+    initFontSelector();
+  </script>
+</body>
 </html>
