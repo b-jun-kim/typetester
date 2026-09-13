@@ -19,6 +19,7 @@
       padding: 0;
     }
 
+    /* 전체 높이를 뷰포트에 맞추고 외부 스크롤 차단 */
     body {
       background-color: var(--bg);
       color: var(--text);
@@ -27,19 +28,21 @@
       line-height: 1.4;
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
       transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
     }
 
     /* 전체화면 모드 제어 */
     body.is-fullscreen header,
     body.is-fullscreen .controls,
-    body.is-fullscreen .meta-bar {
+    body.is-fullscreen footer {
       display: none !important;
     }
 
     body.is-fullscreen .tester-container {
-      min-height: 100vh;
-      height: 100vh;
       padding: 60px;
     }
 
@@ -66,13 +69,16 @@
       display: block;
     }
 
-    /* 상단 네비게이션 헤더 */
+    /* 상단 고정 헤더 */
     header {
+      flex-shrink: 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 10px 16px;
       border-bottom: 1px solid var(--border);
+      background-color: var(--bg);
+      z-index: 10;
     }
 
     .brand-title {
@@ -98,12 +104,14 @@
       color: var(--text);
     }
 
-    /* 조판 컨트롤 패널 */
+    /* 상단 고정 컨트롤 패널 */
     .controls {
+      flex-shrink: 0;
       display: flex;
       flex-wrap: wrap;
       border-bottom: 1px solid var(--border);
       background-color: var(--panel-bg);
+      z-index: 10;
     }
 
     .control-item {
@@ -206,18 +214,18 @@
       stroke: var(--bg);
     }
 
-    /* 텍스트 편집 영역 */
+    /* 중앙 독립 스크롤 텍스트 영역 */
     .tester-container {
-      position: relative;
-      min-height: calc(100vh - 95px);
+      flex: 1;
       padding: 40px;
+      overflow-y: auto; /* 엔터를 쳐도 내부에서만 스크롤 발생 */
       display: flex;
       flex-direction: column;
     }
 
     #preview {
-      flex: 1;
       width: 100%;
+      min-height: 100%;
       outline: none;
       white-space: pre-wrap;
       word-break: break-word;
@@ -228,15 +236,17 @@
       text-transform: uppercase;
     }
 
-    /* 하단 메타 바 */
-    .meta-bar {
-      margin-top: 40px;
-      padding-top: 12px;
+    /* 하단 고정 메타 바 */
+    footer.meta-bar {
+      flex-shrink: 0;
+      padding: 12px 16px;
       border-top: 1px solid var(--border);
       display: flex;
       justify-content: space-between;
       color: var(--accent);
       font-size: 10px;
+      background-color: var(--bg);
+      z-index: 10;
     }
   </style>
 </head>
@@ -308,14 +318,16 @@
     </div>
   </div>
 
+  <!-- 독립 스크롤 영역 -->
   <main class="tester-container">
-    <!-- 기본 예시 문장 수정 -->
     <div id="preview" contenteditable="true" spellcheck="false">THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG</div>
-    <div class="meta-bar">
-      <span id="font-name-indicator">Loaded Font: Initializing...</span>
-      <span>UTF-8 / Dynamic Preview</span>
-    </div>
   </main>
+
+  <!-- 하단 고정 바 -->
+  <footer class="meta-bar">
+    <span id="font-name-indicator">Loaded Font: Initializing...</span>
+    <span>UTF-8 / Dynamic Preview</span>
+  </footer>
 
   <script>
     const GITHUB_USER = 'b-jun-kim';
