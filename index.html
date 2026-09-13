@@ -309,8 +309,8 @@
   </div>
 
   <main class="tester-container">
-    <div id="preview" contenteditable="true" spellcheck="false">The quick brown fox jumps over the lazy dog.
-0123456789 — !@#$%^&*()</div>
+    <!-- 기본 예시 문장 수정 -->
+    <div id="preview" contenteditable="true" spellcheck="false">THE QUICK BROWN FOX JUMPS OVER THE LAZY DOG</div>
     <div class="meta-bar">
       <span id="font-name-indicator">Loaded Font: Initializing...</span>
       <span>UTF-8 / Dynamic Preview</span>
@@ -408,7 +408,6 @@
       applyFont(e.target.value);
     });
 
-    // 슬라이더 조작 시 본문 스타일만 즉각 업데이트
     inputSize.addEventListener('input', (e) => {
       preview.style.fontSize = `${e.target.value}px`;
     });
